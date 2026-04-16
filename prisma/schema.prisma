@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+
+  habits    Habit[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+// Habit (Odat)
+model Habit {
+  id        String   @id @default(uuid())
+  name      String
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  color     String   @default("#10B981")
+  icon      String?
+  isActive  Boolean  @default(true) @map("is_active")
+
+  tracks    HabitTrack[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("habits")
+}
+
+// Hafta
+model HabitWeek {
+  id         String   @id @default(uuid())
+  weekNumber Int      @map("week_number")
+  startDate  DateTime @map("start_date") @db.Date
+  endDate    DateTime @map("end_date") @db.Date
+  
+  tracks     HabitTrack[]
+  
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([weekNumber, startDate])
+  @@index([weekNumber])
+  @@map("habit_weeks")
+}
+
+// Kunda belgilash
+model HabitTrack {
+  id          String   @id @default(uuid())
+  habitId     String   @map("habit_id")
+  weekId      String   @map("week_id")
+  trackDate   DateTime @map("track_date") @db.Date
+  isCompleted Boolean  @default(false) @map("is_completed")
+  notes       String?
+  
+  habit       Habit      @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  week        HabitWeek  @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([habitId, trackDate])
+  @@index([habitId])
+  @@index([weekId])
+  @@index([trackDate])
+  @@map("habit_tracks")
+}
